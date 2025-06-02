@@ -1,7 +1,16 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def create_graph(jobs):
+"""
+* create_graph -> Create a bar graph showing the power usage of all input jobs over a period of one day
+* 
+* INPUTS
+* jobs (list[dict]) -> A list of job objects
+* 
+* OUTPUTS
+* None
+"""
+def create_graph(jobs, extension, extension_num):
     time_array = [0 for _ in range(1440)]
     for job_object in jobs:
         aj = job_object['release']
@@ -23,7 +32,9 @@ def create_graph(jobs):
     plt.ylabel("Energy Units")
     plt.title("Job Power Usage")
 
-    plt.show()
+    plt.savefig(f'../Figures/{extension}{extension_num}.png')
+
+    # plt.show()
     
 
             
