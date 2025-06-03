@@ -110,10 +110,11 @@ def get_jobs_aggregated(batch_size, start_time, end_time):
         aj = jobs[i]['release']
         dj = jobs[i]['deadline']
 
-        # check if the specific job lies within the correct window
+        # Check if the specific job lies within the correct window
+        # The funky syntax is used to put the job id at the very front of the dictionary
         if aj >= start_time and dj <= end_time:
-            jobs[i]['job_id'] = i
-            job_array.append(jobs[i])
+            job_id = {'job_id' : i}
+            job_array.append({**job_id, **jobs[i]})
     
     # Return the array of job objects
     return job_array
@@ -128,7 +129,7 @@ def get_jobs_aggregated(batch_size, start_time, end_time):
 * OUPUT
 * None
 """
-def write_jobs():
+def write_jobs(from_aggregate=True):
 
     # Get the preferred batch size, release time minimum and deadline time maximum
     batch_size = int(input("Job batch size: "))
@@ -136,24 +137,25 @@ def write_jobs():
     end_time = int(input("End time boundary: "))
 
     # Gather jobs based on these user specifications
-    for i in range(5):
-        jobs = get_jobs(batch_size, start_time, end_time)
-        create_graph(jobs, "instance_jobs_", i)
-
-    for i in range(5):
+    if from_aggregate:
         jobs = get_jobs_aggregated(batch_size, start_time, end_time)
-        create_graph(jobs, "aggregated_jobs_", i)
+    else:
+        jobs = get_jobs(batch_size, start_time, end_time)
+    
+    # Plot the jobs on a graph and export them to the Figures/ folder
+    # create_graph(jobs, "aggregated_jobs_", i)
 
     # Open a csv file and write the gathered data to it
-    # with open('../job_data.csv', mode='w', newline='') as csvfile:
-    #     fieldnames = ['job_id', 'release', 'deadline', 'length', 'height']
-    #     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-    #     writer.writeheader()
-    #     writer.writerows(jobs)
+    with open('../job_data.csv', mode='w', newline='') as csvfile:
+        fieldnames = ['job_id', 'release', 'deadline', 'length', 'height']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(jobs)
 
 
 if __name__ == "__main__":
-    write_jobs()
+    # write_jobs()
+    print("hello world")
         
 
 

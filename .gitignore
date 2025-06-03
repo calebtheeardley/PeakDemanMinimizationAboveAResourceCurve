@@ -1,0 +1,7 @@
+# Ignore the dataset with all of the job instances data
+Job_Processes_Dataset/
+Data/
+Readings/
+Figures/
+
+__pycache__/
