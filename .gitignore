@@ -1,6 +1,6 @@
 # Ignore the dataset with all of the job instances data
 Job_Processes_Dataset/
-Data/
+Data/instances/
 Readings/
 Figures/
 

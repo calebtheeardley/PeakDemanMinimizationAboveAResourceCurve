@@ -34,7 +34,7 @@ def create_graph(jobs, extension, extension_num):
 
     plt.savefig(f'../Figures/{extension}{extension_num}.png')
 
-    # plt.show()
+    plt.show()
     
 
             
