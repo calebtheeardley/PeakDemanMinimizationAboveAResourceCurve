@@ -1,5 +1,4 @@
 import cplex
-from docplex.mp.model import Model
 
 """
 *** Problem ***
@@ -14,9 +13,9 @@ Do we want the program to think that this case is an overlap?
 # This is The list of job objects that will be scheduled
 # They each have a release, deadline, duration and height
 jobs = [ 
-    {'release' : 0, 'deadline' : 4, 'duration' : 3, 'height' : 2},  
-    {'release' : 2, 'deadline' : 8, 'duration' : 2, 'height' : 7},
-    {'release' : 2, 'deadline' : 6, 'duration' : 3, 'height' : 3}
+    {'release' : 0, 'deadline' : 3, 'duration' : 2, 'height' : 2},  
+    {'release' : 3, 'deadline' : 5, 'duration' : 2, 'height' : 3},
+    {'release' : 3, 'deadline' : 7, 'duration' : 2, 'height' : 2}
 ]
 
 # This creates j number of distinct sub-lists where j is the number of jobs
@@ -36,15 +35,16 @@ for i, job in enumerate(jobs):
 # This can be accessed later during the execution of the linear program
 height = [job['height'] for job in jobs]
 
-# This list will represent the value of the resource curve at each distinct time step
-# However, for now, it will be left 0 for all time steps for the purposes of debugging
-resources = [0 for _ in range(8)]
-
 # This represents each distinct time step
 # It could be easily replaced with a set integer representing the number of time steps
 # In a certain period
 # times = [i for i in range(8)]
 num_time_steps = 8
+
+# This list will represent the value of the resource curve at each distinct time step
+# However, for now, it will be left 0 for all time steps for the purposes of debugging
+resources = [3 for _ in range(num_time_steps)]
+# resources = [3, 3, 3, 5, 6, 6, 3, 3]
 
 # This creates a list of objects with the form {'name': x_i_j, value: ?}
 # where each name is a distinct time interval for a distinct job
@@ -126,7 +126,9 @@ for i in range(num_time_steps):
         # Check the interval times of the corresponding variable
         # Then check if the current timestep falls within that interval
         job_interval_start, job_interval_end = variable['value'][0], variable['value'][1]
-        if i >= job_interval_start and i <= job_interval_end:
+
+        # if i >= job_interval_start and i <= job_interval_end: #COME BACK TO THIS
+        if job_interval_start <= i < job_interval_end:
             job_id = int(variable['name'].split('_')[-1])
 
             use_height.append(height[job_id])
@@ -135,6 +137,8 @@ for i in range(num_time_steps):
     # Add d to the decision variables 
     use_variables.append('d')
     use_height.append(-1)
+
+    # print(use_variables, use_height)
 
     # Add the linear constraint to the problem
     problem.linear_constraints.add(
@@ -158,57 +162,4 @@ for name in names:
         job_id = int(name.split('_')[-1])
         interval_id = int(name.split('_')[1])
         print(f"Job {job_id} interval: {intervals[job_id][interval_id]}")
-        # print(f"{name} = {val}")
-
-
-
-
-"""
-Solve the ILP - With Docplex
-"""
-# model = Model(name="Simple ILP")
-
-# # Define integer decision variables
-# x00 = model.integer_var(name="x00")
-# x10 = model.integer_var(name="x10")
-# x20 = model.integer_var(name="x20")
-
-# x01 = model.integer_var(name="x01")
-# x11 = model.integer_var(name="x11")
-
-# d = model.continuous_var(lb=0, ub=4, name="d") 
-
-# # Add constraints
-# model.add_constraint(x00 + x10 + x20 == 1, "c1")
-# model.add_constraint(x01 + x11 == 1, "c2")
-
-
-# model.add_constraint(height[0] * x00 <= d) # Timestamp 0
-# model.add((height[0] * x00) + (height[0] * x10) <= d) # Timestemp 1
-# model.add((height[0] * x00) + (height[0] * x10) + (height[0] * x20) <= d) # Timestemp 2, 3
-# model.add_constraint((height[0] * x10) + (height[0] * x20) + (height[1] * x01) <= d) # Timestamp 4
-# model.add_constraint((height[0] * x20) + (height[1] * x01) + (height[1] * x11) <= d) # Timestamp 5
-# model.add_constraint((height[1] * x01) + (height[1] * x11) <= d) # Timestamp 6
-# model.add_constraint((height[1] * x11) <= d) # Timestamp 7
-
-# # Define the objective
-# model.minimize(d)
-
-# # Solve the problem
-# solution = model.solve()
-
-# Display results
-# if solution:
-#     print("Optimal Solution:")
-
-#     print(f"x00 = {x00.solution_value}")
-#     print(f"x10 = {x10.solution_value}")
-#     print(f"x20 = {x20.solution_value}")
-
-#     print()
-#     print(f"x01 = {x01.solution_value}")
-#     print(f"x11 = {x11.solution_value}")
-
-#     print(f"Objective value = {model.objective_value}")
-# else:
-#     print("No feasible solution found.")
+    # print(f"{name} = {val}")
