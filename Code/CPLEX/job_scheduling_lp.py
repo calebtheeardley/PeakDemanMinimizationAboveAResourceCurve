@@ -1,26 +1,13 @@
 import cplex
+import random
 
-"""
-*** Problem ***
-One problem to note is that if a job finishes at a certain time and another job ends at a certain time, 
-then the program will consider that an overlap and therefore will not schedule one of those two jobs if it has the 
-opportunity to. Additionally, it will say that the max height is the sum of those two jobs 
-
-*** Question ***
-Do we want the program to think that this case is an overlap? 
-"""
 
 # This is The list of job objects that will be scheduled
 # They each have a release, deadline, duration and height
 jobs = [ 
-    {'release' : 0, 'deadline' : 4, 'duration' : 2, 'height' : 1},  
-    {'release' : 1, 'deadline' : 6, 'duration' : 1, 'height' : 2},
-    {'release' : 3, 'deadline' : 8, 'duration' : 2, 'height' : 1},
-    {'release' : 4, 'deadline' : 6, 'duration' : 2, 'height' : 2},
-    {'release' : 0, 'deadline' : 5, 'duration' : 1, 'height' : 1},
-    {'release' : 3, 'deadline' : 7, 'duration' : 1, 'height' : 1},
-    {'release' : 5, 'deadline' : 7, 'duration' : 1, 'height' : 3},
-    {'release' : 0, 'deadline' : 8, 'duration' : 1, 'height' : 2},
+    {'release' : 0, 'deadline' : 2, 'duration' : 1, 'height' : 2},  
+    {'release' : 0, 'deadline' : 3, 'duration' : 1, 'height' : 3},
+    {'release' : 1, 'deadline' : 3, 'duration' : 1, 'height' : 1},
 ]
 
 # This creates j number of distinct sub-lists where j is the number of jobs
@@ -43,13 +30,12 @@ height = [job['height'] for job in jobs]
 # This represents each distinct time step
 # It could be easily replaced with a set integer representing the number of time steps
 # In a certain period
-# times = [i for i in range(8)]
-num_time_steps = 10
+num_time_steps = 4
 
 # This list will represent the value of the resource curve at each distinct time step
 # However, for now, it will be left 0 for all time steps for the purposes of debugging
-# resources = [0 for _ in range(num_time_steps)]
-resources = [0, 1, 1, 3, 3, 3, 3, 2, 0, 0]
+resources = [0 for _ in range(num_time_steps)]
+# resources = [0, 1, 1, 3, 3, 3, 3, 2, 0, 0]
 
 # This creates a list of objects with the form {'name': x_i_j, value: ?}
 # where each name is a distinct time interval for a distinct job
@@ -81,10 +67,10 @@ names = [variable['name'] for variable in decision_variables] + [objective_varia
 # these are the other parameters needed to form the basis of the linear programming problem
 obj = [0 for _ in range(len(decision_variables))] + [1]# only minimizing d
 lb = [0 for _ in range(len(decision_variables))] + [0]
-ub = [1 for _ in range(len(decision_variables)) ] + [sum(height)]#[max(height)]  # d is bounded [0, 4]
+ub = [1 for _ in range(len(decision_variables)) ] + [sum(height)] # THIS MAY CAUSE A PROBLEM LATER  
 
 # Establish the problem
-types = [problem.variables.type.integer] * (len(decision_variables)) + [problem.variables.type.continuous]
+types = [problem.variables.type.continuous] * (len(decision_variables)) + [problem.variables.type.continuous]
 problem.variables.add(obj=obj, lb=lb, ub=ub, types=types, names=names)
 
 
@@ -158,13 +144,60 @@ problem.solve()
 
 # --- Output solution ---
 solution = problem.solution
-print("Status:", solution.get_status_string())
-print("Objective value:", solution.get_objective_value())
+# print("Status:", solution.get_status_string())
+# print("Objective value:", solution.get_objective_value())
 
-for name in names:
-    val = solution.get_values(name)
-    if val == 1 and name != 'd':
-        job_id = int(name.split('_')[-1])
-        interval_id = int(name.split('_')[1])
-        print(f"Job {job_id} interval: {intervals[job_id][interval_id]}")
-    # print(f"{name} = {val}")
+# for name in names:
+#     val = solution.get_values(name)
+#     if name != 'd':
+#         # job_id = int(name.split('_')[-1])
+#         # interval_id = int(name.split('_')[1])
+#         # print(f"Job {job_id} interval: {intervals[job_id][interval_id]}")
+#         print(f"{name} = {val}")
+
+
+# --- Generate solution set (post processing) ---
+# Loop through each of the jobs and generate a random number
+# Choose a decision variable based on the probability of the current value of the decision variables
+# Add that chosen variable to a final list so that the overall objective value can be ascertained
+final_intervals = []
+final_heights = [0 for _ in range(num_time_steps)]
+
+curr_index = 0
+# Loop through each job
+for job_id in range(len(intervals)):
+    # Generate a random number for the job to be used to select a specific interval
+    random_num = random.uniform(0, 1)
+    probability = 0
+
+    # Loop through each interval in the job and get the value corresponding to each interval (decision variable)
+    # Add the decision variable to the final interval list based on the random number 
+    for i, interval in enumerate(intervals[job_id]):
+        decision_variable = decision_variables[curr_index]
+        decision_value = solution.get_values(decision_variable['name'])
+        probability += decision_value
+
+        if random_num <= probability and len(final_intervals) <= job_id:
+            final_intervals.append(decision_variable)
+        
+        curr_index += 1
+
+# Generate the height of all of the jobs over the course of all of the time steps
+# Do this by iterating through all of the selected job intervals in final_intervals and add their height values 
+# to the final_heights arrays. From this we can determine the objective value of d
+# simply take the maximum from this height list
+for job_id, job in enumerate(final_intervals):
+    job_start = job['value'][0]
+    job_end = job['value'][1]
+    job_height = height[job_id]
+
+    for i in range(job_start, job_end):
+        final_heights[i] += job_height
+
+
+for i in final_intervals:
+    print(i)
+print(final_heights)
+
+
+
