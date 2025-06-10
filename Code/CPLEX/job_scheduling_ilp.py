@@ -23,6 +23,7 @@ jobs = [
     {'release' : 0, 'deadline' : 8, 'duration' : 1, 'height' : 2},
 ]
 
+
 # This creates j number of distinct sub-lists where j is the number of jobs
 # Each sublist contains all of the finite possible intervals during which job j could be executed
 intervals = [[] for _ in range(len(jobs))]
@@ -49,7 +50,7 @@ num_time_steps = 10
 # This list will represent the value of the resource curve at each distinct time step
 # However, for now, it will be left 0 for all time steps for the purposes of debugging
 # resources = [0 for _ in range(num_time_steps)]
-resources = [0, 1, 1, 3, 3, 3, 3, 2, 0, 0]
+resources = [0, 1, 1, 3, 4, 3, 3, 2, 0, 0]
 
 # This creates a list of objects with the form {'name': x_i_j, value: ?}
 # where each name is a distinct time interval for a distinct job
@@ -161,10 +162,10 @@ solution = problem.solution
 print("Status:", solution.get_status_string())
 print("Objective value:", solution.get_objective_value())
 
-for name in names:
-    val = solution.get_values(name)
-    if val == 1 and name != 'd':
-        job_id = int(name.split('_')[-1])
-        interval_id = int(name.split('_')[1])
-        print(f"Job {job_id} interval: {intervals[job_id][interval_id]}")
-    # print(f"{name} = {val}")
+# for name in names:
+#     val = solution.get_values(name)
+#     if val == 1 and name != 'd':
+#         job_id = int(name.split('_')[-1])
+#         interval_id = int(name.split('_')[1])
+#         print(f"Job {job_id} interval: {intervals[job_id][interval_id]}")
+#     # print(f"{name} = {val}")

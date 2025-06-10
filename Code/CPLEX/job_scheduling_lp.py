@@ -1,14 +1,54 @@
 import cplex
 import random
+import json
 
+jobs = [
+    {'release' : 0, 'deadline' : 4, 'length' : 2, 'height' : 1},  
+    {'release' : 1, 'deadline' : 6, 'length' : 1, 'height' : 2},
+    {'release' : 3, 'deadline' : 8, 'length' : 2, 'height' : 1},
+    {'release' : 4, 'deadline' : 6, 'length' : 2, 'height' : 2},
+    {'release' : 0, 'deadline' : 5, 'length' : 1, 'height' : 1},
+    {'release' : 3, 'deadline' : 7, 'length' : 1, 'height' : 1},
+    {'release' : 5, 'deadline' : 7, 'length' : 1, 'height' : 3},
+    {'release' : 0, 'deadline' : 8, 'length' : 1, 'height' : 2},
+]
 
 # This is The list of job objects that will be scheduled
 # They each have a release, deadline, duration and height
-jobs = [ 
-    {'release' : 0, 'deadline' : 2, 'duration' : 1, 'height' : 2},  
-    {'release' : 0, 'deadline' : 3, 'duration' : 1, 'height' : 3},
-    {'release' : 1, 'deadline' : 3, 'duration' : 1, 'height' : 1},
-]
+# path = '../../Data/job_data.json'
+# with open(path, 'r') as file:
+#     data = json.load(file)
+
+# start_time = 600
+# end_time = 1200
+# max_length = 50
+# batch_size = 150
+
+# # Randomly shuffle the jobs so that there is variation between trials
+# jobs_array = data['jobs']
+# random.shuffle(jobs_array)
+
+# jobs = []
+
+# # Iterate through the job objects and create an array of objects that fall within the specified time window
+# i = 0
+# curr_index = 0
+# while (i < batch_size):
+#     aj = jobs_array[curr_index]['release']
+#     dj = jobs_array[curr_index]['deadline']
+#     lj = jobs_array[curr_index]['length']
+
+#     # Check if the specific job lies within the correct window
+#     # The funky syntax is used to put the job id at the very front of the dictionary
+#     if aj >= start_time and dj <= end_time and lj <= max_length:
+#         job_id = {'job_id' : i}
+#         jobs.append({**job_id, **jobs_array[curr_index]})
+#         i += 1
+    
+#     curr_index += 1
+
+# for job in jobs:
+#     print(job, ",")
 
 # This creates j number of distinct sub-lists where j is the number of jobs
 # Each sublist contains all of the finite possible intervals during which job j could be executed
@@ -16,7 +56,7 @@ intervals = [[] for _ in range(len(jobs))]
 for i, job in enumerate(jobs):
     release = job['release']
     deadline = job['deadline']
-    duration = job['duration']
+    duration = job['length']
     num = release
 
     while (num + duration <= deadline):
@@ -30,12 +70,12 @@ height = [job['height'] for job in jobs]
 # This represents each distinct time step
 # It could be easily replaced with a set integer representing the number of time steps
 # In a certain period
-num_time_steps = 4
+num_time_steps = 10
 
 # This list will represent the value of the resource curve at each distinct time step
 # However, for now, it will be left 0 for all time steps for the purposes of debugging
-resources = [0 for _ in range(num_time_steps)]
-# resources = [0, 1, 1, 3, 3, 3, 3, 2, 0, 0]
+# resources = [0 for _ in range(num_time_steps)]
+resources = [0, 1, 1, 3, 4, 3, 3, 2, 0, 0]
 
 # This creates a list of objects with the form {'name': x_i_j, value: ?}
 # where each name is a distinct time interval for a distinct job
@@ -49,10 +89,13 @@ for j, interval_set in enumerate(intervals):
 # This is the name of the objective variable that we will minimize
 objective_variable = 'd'
 
+print('done phase 1')
 
-"""
-Solve the ILP - with cplex
-"""
+
+
+
+#---- Solve the LP ----
+
 # Create the cplex problem
 problem = cplex.Cplex()
 problem.set_problem_type(cplex.Cplex.problem_type.LP)
@@ -72,6 +115,10 @@ ub = [1 for _ in range(len(decision_variables)) ] + [sum(height)] # THIS MAY CAU
 # Establish the problem
 types = [problem.variables.type.continuous] * (len(decision_variables)) + [problem.variables.type.continuous]
 problem.variables.add(obj=obj, lb=lb, ub=ub, types=types, names=names)
+
+print('done phase 2')
+
+
 
 
 # --- Add constraints ---
@@ -100,9 +147,6 @@ for i, interval in enumerate(intervals):
         rhs=[1]
     )
     
-
-
-# Timestamp constraints:
 # This for loop establishes the timestamp constraints
 # It aggregates all of the desicion variables that correspond to intervals that could possibly be running during that time step
 # It then aggregates the heights corresponding to the jobs that each decision variable represents. 
@@ -138,22 +182,21 @@ for i in range(num_time_steps):
         rhs=[resources[i]]
     )
 
+print('done phase 3')
+
+
 
 # --- Solve the model ---
 problem.solve()
 
+print('done phase 4')
+
+
+
 # --- Output solution ---
 solution = problem.solution
-# print("Status:", solution.get_status_string())
-# print("Objective value:", solution.get_objective_value())
 
-# for name in names:
-#     val = solution.get_values(name)
-#     if name != 'd':
-#         # job_id = int(name.split('_')[-1])
-#         # interval_id = int(name.split('_')[1])
-#         # print(f"Job {job_id} interval: {intervals[job_id][interval_id]}")
-#         print(f"{name} = {val}")
+
 
 
 # --- Generate solution set (post processing) ---
@@ -195,9 +238,17 @@ for job_id, job in enumerate(final_intervals):
         final_heights[i] += job_height
 
 
-for i in final_intervals:
-    print(i)
-print(final_heights)
+print("Objective value:", max(final_heights) - max(resources))
 
 
+# other_heights = [0 for _ in range(num_time_steps)]
+# for job_id, job in enumerate(intervals):
+#     interval = job[0]
+#     job_start = interval[0]
+#     job_end = interval[1]
+#     job_height = height[job_id]
 
+#     for i in range(job_start, job_end):
+#         other_heights[i] += job_height
+
+# print("Other value:", max(other_heights))
