@@ -1,7 +1,6 @@
 # Ignore the dataset with all of the job instances data
 Job_Processes_Dataset/
-Data/instances/
+Input_Data/instances/
 Readings/
-Figures/
 
 __pycache__/
