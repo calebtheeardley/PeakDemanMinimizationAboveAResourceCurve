@@ -10,7 +10,7 @@ start_time = 0
 end_time = 1400
 max_length = 700
 
-for batch_size in range(100, 600, 100):
+for batch_size in range(100, 1100, 100):
 
     print(batch_size)
 
