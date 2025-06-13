@@ -197,12 +197,12 @@ for batch_size in range(start_size, end_size, step_size):
         point the job schedule curve could possibly be, which is the total sum of the 'heights' list.
         """
         # Create the cplex problem
-        problem = cplex.Cplex()
-        problem.set_problem_type(cplex.Cplex.problem_type.LP)
-        problem.set_results_stream(None)
+        lp_problem = cplex.Cplex()
+        lp_problem.set_problem_type(cplex.Cplex.problem_type.LP)
+        lp_problem.set_results_stream(None)
 
         # Maximize objective
-        problem.objective.set_sense(problem.objective.sense.minimize)
+        lp_problem.objective.set_sense(lp_problem.objective.sense.minimize)
 
         # This retrieves the names of all of the decision variables 
         names = [variable['name'] for variable in decision_variables] + [objective_variable]
@@ -214,9 +214,34 @@ for batch_size in range(start_size, end_size, step_size):
 
 
         # Establish the problem
-        types = [problem.variables.type.integer] * (len(decision_variables)) + [problem.variables.type.continuous]
-        problem.variables.add(obj=obj, lb=lb, ub=ub, types=types, names=names)
+        types = [lp_problem.variables.type.continuous] * (len(decision_variables)) + [lp_problem.variables.type.continuous]
+        lp_problem.variables.add(obj=obj, lb=lb, ub=ub, types=types, names=names)
 
+
+
+        """
+        ----- Create the ILP -----
+        """
+         # Create the cplex problem
+        ilp_problem = cplex.Cplex()
+        ilp_problem.set_problem_type(cplex.Cplex.problem_type.LP)
+        ilp_problem.set_results_stream(None)
+
+        # Maximize objective
+        ilp_problem.objective.set_sense(ilp_problem.objective.sense.minimize)
+
+        # This retrieves the names of all of the decision variables 
+        names = [variable['name'] for variable in decision_variables] + [objective_variable]
+
+        # these are the other parameters needed to form the basis of the linear programming problem
+        obj = [0 for _ in range(len(decision_variables))] + [1] # only minimizing d
+        lb = [0 for _ in range(len(decision_variables))] + [0]
+        ub = [1 for _ in range(len(decision_variables)) ] + [sum(height)]
+
+
+        # Establish the problem
+        types = [ilp_problem.variables.type.integer] * (len(decision_variables)) + [ilp_problem.variables.type.continuous]
+        ilp_problem.variables.add(obj=obj, lb=lb, ub=ub, types=types, names=names)
 
 
         """
@@ -238,7 +263,13 @@ for batch_size in range(start_size, end_size, step_size):
             constraints = [1 for _ in range(len(variables))]
 
             # This is saying that the sum of each of the decision variabels can only equal one
-            problem.linear_constraints.add(
+            lp_problem.linear_constraints.add(
+                lin_expr=[ [ variables, constraints ] ],
+                senses=['E'],
+                rhs=[1]
+            )
+
+            ilp_problem.linear_constraints.add(
                 lin_expr=[ [ variables, constraints ] ],
                 senses=['E'],
                 rhs=[1]
@@ -273,7 +304,13 @@ for batch_size in range(start_size, end_size, step_size):
             use_height.append(-1)
 
             # Add the linear constraint to the problem
-            problem.linear_constraints.add(
+            lp_problem.linear_constraints.add(
+                lin_expr=[ [ use_variables, use_height ] ],
+                senses=['L'],
+                rhs=[resources[i]]
+            )
+
+            ilp_problem.linear_constraints.add(
                 lin_expr=[ [ use_variables, use_height ] ],
                 senses=['L'],
                 rhs=[resources[i]]
@@ -281,26 +318,92 @@ for batch_size in range(start_size, end_size, step_size):
 
 
 
+
         """
         ----- Solve the LP ----- 
         """
         print("start solve")
-        problem.solve()
-        solution = problem.solution
+        lp_problem.solve()
+        lp_solution = lp_problem.solution
+
+        ilp_problem.solve()
+        ilp_solution = ilp_problem.solution
         print("end solve")
 
 
+
+        """
+        ----- Choose the job intervals -----
+
+        Each decision variable for a specific job will have a value between 0-1. However, we need to choose exactly one interval for a specific job to run in.
+
+        Therefore, we use the values of the decision variables as a probability that that specific interval will run. This means that if a decision variable has a h
+        igher value, it's corresponding interval has a higher likelihood of being chosen for the job.
+        """
+        # Loop through each of the jobs and generate a random number
+        # Choose a decision variable based on the probability of the current value of the decision variables
+        # Add that chosen variable to a final list so that the overall objective value can be ascertained
+        final_intervals = []
+        final_heights = [0 for _ in range(num_time_steps)]
+
+        curr_index = 0
+        # Loop through each job
+        for job_id in range(len(intervals)):
+            # Generate a random number for the job to be used to select a specific interval
+            random_num = random.uniform(0, 1)
+            probability = 0
+
+            # Loop through each interval in the job and get the value corresponding to each interval (decision variable)
+            # Add the decision variable to the final interval list based on the random number 
+            for i, interval in enumerate(intervals[job_id]):
+                decision_variable = decision_variables[curr_index]
+                decision_value = lp_solution.get_values(decision_variable['name'])
+                probability += decision_value
+
+                if random_num <= probability and len(final_intervals) <= job_id:
+                    final_intervals.append(decision_variable)
+                
+                curr_index += 1
+
+        # Generate the height of all of the jobs over the course of all of the time steps
+        # Do this by iterating through all of the selected job intervals in final_intervals and add their height values 
+        # to the final_heights arrays. From this we can determine the objective value of d
+        # simply take the maximum from this height list
+        for job_id, job in enumerate(final_intervals):
+            job_start = job['value'][0]
+            job_end = job['value'][1]
+            job_height = height[job_id]
+
+            for i in range(job_start, job_end):
+                final_heights[i] += job_height
+
+
+
+        """
+        ----- Calculate the objective values ----
+
+        This code calculates the maximum peak above the demand curve for the naive algorithm and the inexact algorithm
+        """
+        objective_value = 0
+        for i, height in enumerate(final_heights):
+            if height - resources[i] > objective_value:
+                objective_value = height - resources[i]
+
+        naive_objective_value = 0
+        for i, height in enumerate(bad_heights):
+            if (height * scale_factor) - resources[i] > naive_objective_value:
+                naive_objective_value = (height * scale_factor) - resources[i]
 
         """
         ----- Export the data ----- 
         """
         # Write to a data csv file
         data = [
-            {"batch_size": batch_size,"trial #": k, "exact objective val": solution.get_objective_value()}
+            {"batch_size": batch_size,"trial #": k, "naive obective val": naive_objective_value, "inexact objective val": objective_value, "exact objective val": ilp_solution.get_objective_value()}
         ]
 
-        with open(f"../../Output_Data/Results/final_exact_objective_values.csv", "a", newline="") as csvfile:
-            fieldnames = ['batch_size', 'trial #', 'exact objective val']
+        with open(f"../../Output_Data/Results/final_combined_objective_values.csv", "a", newline="") as csvfile:
+            fieldnames = ['batch_size', 'trial #', 'naive obective val', 'inexact objective val', 'exact objective val']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             
             # Only write the header on the very first trial run

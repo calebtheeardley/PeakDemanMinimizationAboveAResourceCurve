@@ -1,3 +1,11 @@
+"""
+----- Calculate Job Power Schedules with LP -----
+
+This program is designed to take in n number of distinct power scheduling jobs and determine their ideal ordering in to minimize 
+the peak amount of power demand above a provided resource curve.
+This is a relaxed ILP problem. Therefore, it uses typical LP to solve the problem in polynomial time and then probability to estimate 
+the optimal schedule of jobs.
+"""
 import cplex
 import random
 import json
@@ -10,11 +18,30 @@ start_time = 0
 end_time = 1400
 max_length = 700
 
-for batch_size in range(100, 1100, 100):
+start_size = 25
+end_size = 125
+step_size = 25
+
+
+for batch_size in range(start_size, end_size, step_size):
 
     print(batch_size)
 
     for k in range(4):
+        
+        """
+        ----- Generate Jobs and Other Variables ----- 
+
+        We need to generate the jobs, decision variables and extract other information that will be necessary for the LP to run
+
+        Jobs -> The power requiring tasks upon which this problem is built. Each job will have the following format:
+
+            - release -> The minimum time that a specific job can begin by. A job can begin no earlier than the release time
+            - deadline -> The maximum time that a job must complete by. A job can end no later than the deadline time
+            - duration -> The length (in minutes) that a task will need to complete
+            - height -> The amount of consistent power that a task will require
+        """
+
         # This is The list of job objects that will be scheduled
         # They each have a release, deadline, duration and height
         path = '../../Input_Data/job_data.json'
@@ -46,7 +73,13 @@ for batch_size in range(100, 1100, 100):
             
             curr_index += 1
 
+        """
+        Intervals -> The overall intervals list is composed of exactly J sublists, where J = the number of total jobs
 
+            - Each entry within a sublist is a two integer tuple representing a possible start and end execution time for the corresponding job
+            - For example, the entry (3, 6) in the intervals[0] means that the first job can possibly execute between time steps 3 and 6 (where the start
+            time is inclusive and the end time is exclusive)
+        """
         intervals = [[] for _ in range(len(jobs))]
         for i, job in enumerate(jobs):
             # Extract the necessary information from the job object
@@ -60,13 +93,20 @@ for batch_size in range(100, 1100, 100):
                 intervals[i].append((num, num + duration))
                 num += 1
 
-
+        """
+        Time Steps -> This is simply the number of time steps in the time period between the specified start and end time. 
+            Each time step equates to exactly one minute
+        """
         # Specify the number of time steps 
         num_time_steps = end_time - start_time
 
 
-        # Instantiate the resource curve
+        """
+        Resources -> This is a list that keeps track of the amount of available resources at each time step
 
+            - The resource curve information will be gathered from the Data/ folder.
+        """
+        # Instantiate the resource curve
         path = '../../Input_Data/solar_data.json'
         with open(path, 'r') as file:
             data = json.load(file)
@@ -99,6 +139,16 @@ for batch_size in range(100, 1100, 100):
         resources = total[(24 * day) + start_time : (24 * day) + end_time]
 
 
+
+        """
+        Height -> This is a list containing exactly J entries, where each entry contains that height of the corresponding job. The height of the jobs will be dependent on a scale factor. For now, we will scale the jobs based on the relationship 
+        between the max value of the resource curve and the max value of the naive job schedule
+
+        The naive job schedule, generated below, scehdules each job exactly at their respective start times. From this, we generate the scale factor. We want the peak to be 75% above the resource curve (for now)
+
+            - The height is another word for the amount of the given resource that a job will consistently require while it is running.
+            - Therefore, height[0] = 400 means that the first job requires 400 unites of the given resource
+        """
         bad_heights = [0 for _ in range(num_time_steps)]
         for job in jobs:
             aj = job['release'] - start_time
@@ -108,13 +158,25 @@ for batch_size in range(100, 1100, 100):
             for i in range(aj, aj + lj):
                 bad_heights[i] += hj
 
-
         scale_factor = (max(resources) * 2) / max(bad_heights)
 
         # Iterate through the jobs and add their corresponding heights
         height = [job['height'] * scale_factor for job in jobs]
 
 
+
+
+        """
+        ----- Decision Variables -----
+
+        Decision variables -> A key component of the ILP. They represent each distint execution interval for each job. They can assume any value in [0, 1].
+
+            - This code creates a list of decision variables with the form {'name': x_i_j, value: ?} where each name is a distinct time interval for a distinct job.
+            - Specifically, this is saying that decision variable x_i_j is the ith possible interval for job j where the value is the actual interval of time steps.
+            - This is stored here so we don't have to repeatedly query the intervals list
+
+        Objective variable -> Instantiate the variable that will be minimized during the problem's execution
+        """
         decision_variables = []
         for j, interval_set in enumerate(intervals):
             for i, interval in enumerate(interval_set):
@@ -125,6 +187,15 @@ for batch_size in range(100, 1100, 100):
         objective_variable = 'd'
 
 
+
+        """
+        ----- Create the LP -----
+
+        Create an LP problem with CPLEX. We have to specify the decision variables for the problem. And then we must specify their respective upper bounds and lower bounds.
+
+        Finally we have to set up the objective function. In this case, the objective function will be to minimize a variable named 'd'. Where d is initially set to the highest
+        point the job schedule curve could possibly be, which is the total sum of the 'heights' list.
+        """
         # Create the cplex problem
         problem = cplex.Cplex()
         problem.set_problem_type(cplex.Cplex.problem_type.LP)
@@ -147,6 +218,15 @@ for batch_size in range(100, 1100, 100):
         problem.variables.add(obj=obj, lb=lb, ub=ub, types=types, names=names)
 
 
+
+        """
+        ----- Constraints -----
+
+        This will generate the first set of constraints
+
+        This for loop adds the constraints that make it so that a job can run during only one interval. So for each job, aggregate all of the decision variables that correspond to each possible execution interval for that job. 
+        Then specify that they all of those decision variables can only add up to one
+        """
         curr_index = 0
         for interval in intervals:
             # Aggregate all the decision variables that belong to one job
@@ -165,7 +245,13 @@ for batch_size in range(100, 1100, 100):
             )
 
 
+        """
+        This generates the second set of constraints
 
+        It aggregates all of the desicion variables that correspond to intervals that could possibly be running during that time step.
+        It then aggregates the heights corresponding to the jobs that each decision variable represents. It multiplies 
+        those heights by the decision variables. However, the constrain ensures that the total sum is less than the max height d
+        """
         for i in range(num_time_steps):
             use_variables = []
             use_height = []
@@ -194,12 +280,25 @@ for batch_size in range(100, 1100, 100):
             )
 
 
+
+        """
+        ----- Solve the LP ----- 
+        """
         print("start solve")
         problem.solve()
         solution = problem.solution
         print("end solve")
 
 
+
+        """
+        ----- Choose the job intervals -----
+
+        Each decision variable for a specific job will have a value between 0-1. However, we need to choose exactly one interval for a specific job to run in.
+
+        Therefore, we use the values of the decision variables as a probability that that specific interval will run. This means that if a decision variable has a h
+        igher value, it's corresponding interval has a higher likelihood of being chosen for the job.
+        """
         # Loop through each of the jobs and generate a random number
         # Choose a decision variable based on the probability of the current value of the decision variables
         # Add that chosen variable to a final list so that the overall objective value can be ascertained
@@ -238,6 +337,12 @@ for batch_size in range(100, 1100, 100):
                 final_heights[i] += job_height
 
 
+
+        """
+        ----- Calculate the objective values ----
+
+        This code calculates the maximum peak above the demand curve for the naive algorithm and the inexact algorithm
+        """
         objective_value = 0
         for i, height in enumerate(final_heights):
             if height - resources[i] > objective_value:
@@ -252,42 +357,23 @@ for batch_size in range(100, 1100, 100):
 
         print("Naive Objective Value:", naive_objective_value)
 
+
+
+        """
+        ----- Export the data ----- 
+        """
         # Write to a data csv file
         data = [
             {"batch_size": batch_size,"trial #": k, "naive obective val": naive_objective_value, "inexact objective val": objective_value}
         ]
 
-        with open(f"../../Output_Data/Results/objective_values_{batch_size}.csv", "a", newline="") as csvfile:
+        with open(f"../../Output_Data/Results/final_inexact_objective_values.csv", "a", newline="") as csvfile:
             fieldnames = ['batch_size', 'trial #', 'naive obective val', 'inexact objective val']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             
-            if k == 0:
+            # Only write the header on the very first trial run
+            if batch_size == start_size and k == 0:
                 writer.writeheader()
             writer.writerows(data)
 
             csvfile.close()
-
-
-        # job_graph_xvalues = np.array([i for i in range(start_time, end_time)])
-
-        # job_graph_yvalues = np.array(final_heights)
-        # bad_job_graph_yvalues = np.array([height * scale_factor for height in bad_heights])
-        # resources_graph_yvalues = np.array(resources)
-
-        # plt.plot(job_graph_xvalues, bad_job_graph_yvalues, label='naive jobs', color='green')
-        # plt.plot(job_graph_xvalues, job_graph_yvalues, label='inexact jobs')
-        # plt.plot(job_graph_xvalues, resources_graph_yvalues, label='resources', color='orange')
-
-
-        # plt.xlabel("Time")
-        # plt.ylabel("Power Units")
-        # plt.legend()
-
-        # def save_figure_safely(path):
-        #     os.makedirs(os.path.dirname(path), exist_ok=True)
-        #     plt.savefig(path)
-
-        # # Usage
-        # save_figure_safely(f"../../Output_Data/Figures/Job_Size_{batch_size}/Trial_{k}.jpg")
-
-        # plt.show()
