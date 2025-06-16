@@ -18,16 +18,16 @@ start_time = 0
 end_time = 1400
 max_length = 700
 
-start_size = 25
-end_size = 125
-step_size = 25
+start_size = 1000
+end_size = 1100
+step_size = 100
 
 
 for batch_size in range(start_size, end_size, step_size):
 
     print(batch_size)
 
-    for k in range(4):
+    for k in range(5):
         
         """
         ----- Generate Jobs and Other Variables ----- 
@@ -138,6 +138,9 @@ for batch_size in range(start_size, end_size, step_size):
         day = 3
         resources = total[(24 * day) + start_time : (24 * day) + end_time]
 
+        # Implement a resource curve scaling factor to better fit the jobs
+        scale_factor = 4.233
+        resources = [r * scale_factor for r in resources]
 
 
         """
@@ -158,10 +161,8 @@ for batch_size in range(start_size, end_size, step_size):
             for i in range(aj, aj + lj):
                 bad_heights[i] += hj
 
-        scale_factor = (max(resources) * 2) / max(bad_heights)
-
         # Iterate through the jobs and add their corresponding heights
-        height = [job['height'] * scale_factor for job in jobs]
+        height = [job['height'] for job in jobs]
 
 
 
@@ -352,8 +353,8 @@ for batch_size in range(start_size, end_size, step_size):
 
         naive_objective_value = 0
         for i, height in enumerate(bad_heights):
-            if (height * scale_factor) - resources[i] > naive_objective_value:
-                naive_objective_value = (height * scale_factor) - resources[i]
+            if (height) - resources[i] > naive_objective_value:
+                naive_objective_value = (height) - resources[i]
 
         print("Naive Objective Value:", naive_objective_value)
 
@@ -367,7 +368,7 @@ for batch_size in range(start_size, end_size, step_size):
             {"batch_size": batch_size,"trial #": k, "naive obective val": naive_objective_value, "inexact objective val": objective_value}
         ]
 
-        with open(f"../../Output_Data/Results/final_inexact_objective_values.csv", "a", newline="") as csvfile:
+        with open(f"../../Output_Data/Results/inexact_objective_values_600_1000.csv", "a", newline="") as csvfile:
             fieldnames = ['batch_size', 'trial #', 'naive obective val', 'inexact objective val']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             
