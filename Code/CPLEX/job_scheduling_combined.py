@@ -1,5 +1,5 @@
 """
------ Calculate Job Power Schedules with LP -----
+----- Calculate Job Power Schedules with LP, Naive and Greedy Algorithms -----
 
 This program is designed to take in n number of distinct power scheduling jobs and determine their ideal ordering in to minimize 
 the peak amount of power demand above a provided resource curve.
@@ -72,6 +72,11 @@ for batch_size in range(start_size, end_size, step_size):
                 i += 1
             
             curr_index += 1
+
+
+        """
+        ----- Generate jobs for the greedy algorithm -----
+        """
 
         """
         Intervals -> The overall intervals list is composed of exactly J sublists, where J = the number of total jobs
