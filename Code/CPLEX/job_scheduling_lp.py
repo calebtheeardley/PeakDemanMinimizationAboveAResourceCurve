@@ -22,10 +22,7 @@ start_size = 600
 end_size = 1100
 step_size = 100
 
-final_inexact_values = []
-final_greedy_values = []
-final_naive_values = []
-
+data = []
 
 for batch_size in range(start_size, end_size, step_size):
 
@@ -388,40 +385,27 @@ for batch_size in range(start_size, end_size, step_size):
         for this difference
         """
         final_greedy_heights = [0 for _ in range(num_time_steps)]
-        final_greedy_heights_2 = [0 for _ in range(num_time_steps)]
         for job_id, interval_set in enumerate(greedy_intervals):
             best_score = float(-math.inf)
             best_interval = None
-
-            best_score_2 = float(math.inf)
-            best_interval_2 = None
 
             job_height = greedy_jobs[job_id]['height']
 
             for interval in interval_set:
                 interval_start, interval_end = interval[0], interval[1]
 
-                # this is measuring the total area oabove the curve
-                score = sum([resources[i] - final_greedy_heights[i] - job_height for i in range(interval_start, interval_end)])
-
                 # We want to find the max of this array above
                 # because we are more concerned right now with PDAC
-                score_2 = max([resources[i] - final_greedy_heights_2[i] - job_height for i in range(interval_start, interval_end)])
+                score = max([resources[i] - final_greedy_heights[i] - job_height for i in range(interval_start, interval_end)])
 
                 if score > best_score:
                     best_score = score
                     best_interval = interval
 
-                if score_2 < best_score_2:
-                    best_score_2 = score_2
-                    best_interval_2 = interval
             
             for i in range(best_interval[0], best_interval[1]):
                 final_greedy_heights[i] += job_height
             
-            for i in range(best_interval_2[0], best_interval_2[1]):
-                final_greedy_heights_2[i] += job_height 
-
             
 
 
@@ -436,7 +420,6 @@ for batch_size in range(start_size, end_size, step_size):
                 objective_value = height - resources[i]
 
         print("Inexact Objective Value:", objective_value)
-        final_inexact_values.append(objective_value)
 
         naive_objective_value = 0
         for i, height in enumerate(naive_heights):
@@ -444,34 +427,34 @@ for batch_size in range(start_size, end_size, step_size):
                 naive_objective_value = (height) - resources[i]
 
         print("Naive Objective Value:", naive_objective_value)
-        final_naive_values.append(naive_objective_value)
 
         greedy_objective_value = 0
-        for i, height in enumerate(final_greedy_heights_2):
+        for i, height in enumerate(final_greedy_heights):
             if height - resources[i] > greedy_objective_value:
                 greedy_objective_value = height - resources[i]
 
         print("Greedy Objctive Value:", greedy_objective_value)
-        final_greedy_values.append(greedy_objective_value)
 
-        """
-        ----- Export the data ----- 
-        """
-        # Write to a data csv file
-        data = [
+
+        # Add the data to the list of data points
+        data.append(
             {"batch_size": batch_size,"trial #": k, "naive obective val": naive_objective_value, "inexact objective val": objective_value, "greedy objective val": greedy_objective_value}
-        ]
+        )
 
-        with open("../../Output_Data/Results/inexact_objective_values_600_1000.csv", "a", newline="") as csvfile:
-            fieldnames = ['batch_size', 'trial #', 'naive obective val', 'inexact objective val', 'greedy_objective_val']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            
-            # Only write the header on the very first trial run
-            if batch_size == start_size and k == 0:
-                writer.writeheader()
-            writer.writerows(data)
 
-            csvfile.close()
+"""
+----- Export the data ----- 
+"""
+# Write to a data csv file
+with open("../../Output_Data/Results/inexact_objective_values_600_1000.csv", "a", newline="") as csvfile:
+    fieldnames = ['batch_size', 'trial #', 'naive obective val', 'inexact objective val', 'greedy objective val']
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    
+    # Only write the header on the very first trial run
+    writer.writeheader()
+    writer.writerows(data)
+
+    csvfile.close()
 
 
 # Append to the data csv file
