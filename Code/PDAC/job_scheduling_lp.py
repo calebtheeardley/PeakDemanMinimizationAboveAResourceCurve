@@ -9,8 +9,6 @@ the optimal schedule of jobs.
 import cplex
 import random
 import json
-import matplotlib.pyplot as plt
-import numpy as np
 import csv
 import math
 

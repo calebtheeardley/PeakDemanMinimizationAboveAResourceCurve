@@ -1,4 +1,4 @@
-batch_size,trial #,naive obective val,inexact objective val,exact objective val
+batch_size,trial #,naive objective val,inexact objective val,exact objective val
 25,0,10272.0,5449.2569612631305,5214.524043620794
 25,1,9281.0,9281.0,6872.937564167953
 25,2,9673.0,6277.65475854318,4445.524240738308
