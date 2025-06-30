@@ -1,0 +1,273 @@
+Inexact Objective Value: 1628.1039999999994
+Naive Objective Value: 6849.967000000001
+Greedy Objctive Value: 0
+start solve
+end solve
+Inexact Objective Value: 6950.832000000013
+Naive Objective Value: 18979.38700000002
+Greedy Objctive Value: 8579.912
+start solve
+end solve
+Inexact Objective Value: 2833.1820000000116
+Naive Objective Value: 15794.467
+Greedy Objctive Value: 5553.276000000009
+start solve
+end solve
+Inexact Objective Value: 2787.016999999996
+Naive Objective Value: 6453.077000000008
+Greedy Objctive Value: 4099.037
+start solve
+end solve
+Inexact Objective Value: 1437.8470000000161
+Naive Objective Value: 7923.417000000012
+Greedy Objctive Value: 0
+600
+start solve
+end solve
+Inexact Objective Value: 6027.176000000007
+Naive Objective Value: 20633.57700000001
+Greedy Objctive Value: 9189.952000000001
+start solve
+end solve
+Inexact Objective Value: 7574.712000000003
+Naive Objective Value: 28968.467000000015
+Greedy Objctive Value: 16657.796000000006
+start solve
+end solve
+Inexact Objective Value: 5367.693000000003
+Naive Objective Value: 16751.597000000012
+Greedy Objctive Value: 10976.197000000004
+start solve
+end solve
+Inexact Objective Value: 6342.102000000017
+Naive Objective Value: 24587.217000000015
+Greedy Objctive Value: 10267.957000000006
+start solve
+end solve
+Inexact Objective Value: 8699.62599999999
+Naive Objective Value: 29354.66700000002
+Greedy Objctive Value: 18234.29599999997
+700
+start solve
+end solve
+Inexact Objective Value: 13331.965999999993
+Naive Objective Value: 31916.294000000016
+Greedy Objctive Value: 20810.73400000001
+start solve
+end solve
+Inexact Objective Value: 7758.211999999996
+Naive Objective Value: 26631.246999999992
+Greedy Objctive Value: 11243.296000000006
+start solve
+end solve
+Inexact Objective Value: 12113.765999999978
+Naive Objective Value: 32927.95199999999
+Greedy Objctive Value: 23459.48599999997
+start solve
+end solve
+Inexact Objective Value: 19522.177000000007
+Naive Objective Value: 48031.21699999999
+Greedy Objctive Value: 24164.847000000005
+start solve
+end solve
+Inexact Objective Value: 12265.387000000006
+Naive Objective Value: 33700.54700000002
+Greedy Objctive Value: 18473.584000000003
+800
+start solve
+end solve
+Inexact Objective Value: 16605.114999999983
+Naive Objective Value: 36448.84700000001
+Greedy Objctive Value: 17998.22700000001
+start solve
+end solve
+Inexact Objective Value: 17517.135000000002
+Naive Objective Value: 38651.087
+Greedy Objctive Value: 21564.333999999988
+start solve
+end solve
+Inexact Objective Value: 18725.896999999994
+Naive Objective Value: 42197.07699999999
+Greedy Objctive Value: 23117.17600000001
+start solve
+end solve
+Inexact Objective Value: 17075.457
+Naive Objective Value: 42269.26700000001
+Greedy Objctive Value: 21789.226000000013
+start solve
+end solve
+Inexact Objective Value: 17158.941999999992
+Naive Objective Value: 41784.37699999999
+Greedy Objctive Value: 26102.20399999996
+900
+start solve
+end solve
+Inexact Objective Value: 12385.365000000013
+Naive Objective Value: 29622.232000000015
+Greedy Objctive Value: 15113.046999999988
+start solve
+end solve
+Inexact Objective Value: 21255.087000000003
+Naive Objective Value: 44140.537
+Greedy Objctive Value: 25913.856999999964
+start solve
+end solve
+Inexact Objective Value: 20957.85199999998
+Naive Objective Value: 40409.50699999994
+Greedy Objctive Value: 25150.00700000001
+start solve
+end solve
+Inexact Objective Value: 23733.966000000004
+Naive Objective Value: 58260.06699999994
+Greedy Objctive Value: 28108.275999999994
+start solve
+end solve
+Inexact Objective Value: 27898.351999999973
+Naive Objective Value: 47370.45699999998
+Greedy Objctive Value: 28199.89599999999
+1000
+start solve
+end solve
+Inexact Objective Value: 37376.41200000001
+Naive Objective Value: 77615.99699999996
+Greedy Objctive Value: 43283.66200000004
+start solve
+end solve
+Inexact Objective Value: 22075.692000000006
+Naive Objective Value: 46962.97699999997
+Greedy Objctive Value: 28353.015999999992
+start solve
+end solve
+Inexact Objective Value: 31624.415999999997
+Naive Objective Value: 59629.48699999995
+Greedy Objctive Value: 33934.25199999999
+start solve
+end solve
+Inexact Objective Value: 21951.77500000003
+Naive Objective Value: 41344.707000000024
+Greedy Objctive Value: 25366.07400000003
+start solve
+end solve
+Inexact Objective Value: 26227.172999999984
+Naive Objective Value: 53437.17700000007
+Greedy Objctive Value: 29897.36699999998
+1100
+start solve
+end solve
+Inexact Objective Value: 31624.225000000042
+Naive Objective Value: 59679.74400000005
+Greedy Objctive Value: 36166.587
+start solve
+end solve
+Inexact Objective Value: 39978.46200000003
+Naive Objective Value: 71642.157
+Greedy Objctive Value: 41024.077000000005
+start solve
+end solve
+Inexact Objective Value: 32612.47700000003
+Naive Objective Value: 63914.04699999999
+Greedy Objctive Value: 37387.22600000001
+start solve
+end solve
+Inexact Objective Value: 33849.725999999966
+Naive Objective Value: 59264.567000000025
+Greedy Objctive Value: 38153.346999999965
+start solve
+end solve
+Inexact Objective Value: 33971.082999999984
+Naive Objective Value: 63656.82699999995
+Greedy Objctive Value: 36518.154
+1200
+start solve
+end solve
+Inexact Objective Value: 37086.47600000003
+Naive Objective Value: 69676.14700000008
+Greedy Objctive Value: 41541.33700000004
+start solve
+end solve
+Inexact Objective Value: 40898.74500000001
+Naive Objective Value: 78249.90699999998
+Greedy Objctive Value: 50009.66600000001
+start solve
+end solve
+Inexact Objective Value: 38643.66199999998
+Naive Objective Value: 79955.89700000003
+Greedy Objctive Value: 47649.34600000002
+start solve
+end solve
+Inexact Objective Value: 30706.67199999998
+Naive Objective Value: 55774.64699999998
+Greedy Objctive Value: 34279.01599999999
+start solve
+end solve
+Inexact Objective Value: 38875.41499999999
+Naive Objective Value: 74769.61700000004
+Greedy Objctive Value: 44084.846999999994
+1300
+start solve
+end solve
+Inexact Objective Value: 40779.23699999998
+Naive Objective Value: 68566.30699999994
+Greedy Objctive Value: 50690.71700000005
+start solve
+end solve
+Inexact Objective Value: 40764.486999999965
+Naive Objective Value: 66791.1769999999
+Greedy Objctive Value: 46894.73700000002
+start solve
+end solve
+Inexact Objective Value: 39133.73300000001
+Naive Objective Value: 72353.42700000001
+Greedy Objctive Value: 41427.456000000006
+start solve
+end solve
+Inexact Objective Value: 37033.982
+Naive Objective Value: 75148.43699999996
+Greedy Objctive Value: 43835.686000000045
+start solve
+end solve
+Inexact Objective Value: 48046.25199999998
+Naive Objective Value: 78159.19699999993
+Greedy Objctive Value: 49029.186
+1400
+start solve
+end solve
+Inexact Objective Value: 48606.345999999976
+Naive Objective Value: 84403.16699999996
+Greedy Objctive Value: 56341.865999999995
+start solve
+end solve
+Inexact Objective Value: 43745.394999999975
+Naive Objective Value: 90509.53199999999
+Greedy Objctive Value: 49147.996000000014
+start solve
+end solve
+Inexact Objective Value: 44015.721999999994
+Naive Objective Value: 79229.80700000003
+Greedy Objctive Value: 53453.50400000003
+start solve
+end solve
+Inexact Objective Value: 49858.36600000006
+Naive Objective Value: 80212.77699999999
+Greedy Objctive Value: 52486.60700000006
+start solve
+end solve
+Inexact Objective Value: 49666.073000000004
+Naive Objective Value: 79272.99699999994
+Greedy Objctive Value: 55201.30599999998
+1500
+start solve
+end solve
+Inexact Objective Value: 42577.38599999995
+Naive Objective Value: 75734.41699999994
+Greedy Objctive Value: 48901.375000000044
+start solve
+end solve
+Inexact Objective Value: 50051.512
+Naive Objective Value: 91174.237
+Greedy Objctive Value: 55681.22699999997
+start solve
+end solve
+Inexact Objective Value: 59084.07599999995
+Naive Objective Value: 90659.12700000001
+Greedy Objctive Value: 60250.963999999934

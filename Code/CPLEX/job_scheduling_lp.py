@@ -18,11 +18,11 @@ start_time = 0
 end_time = 1400
 max_length = 700
 
-start_size = 600
-end_size = 1100
+start_size = 500
+end_size = 2100
 step_size = 100
 
-data = []
+final_data = []
 
 for batch_size in range(start_size, end_size, step_size):
 
@@ -437,7 +437,7 @@ for batch_size in range(start_size, end_size, step_size):
 
 
         # Add the data to the list of data points
-        data.append(
+        final_data.append(
             {"batch_size": batch_size,"trial #": k, "naive obective val": naive_objective_value, "inexact objective val": objective_value, "greedy objective val": greedy_objective_value}
         )
 
@@ -446,7 +446,7 @@ for batch_size in range(start_size, end_size, step_size):
 ----- Export the data ----- 
 """
 # Write to a data csv file
-with open("../../Output_Data/Results/inexact_objective_values_600_1000.csv", "a", newline="") as csvfile:
+with open("../../Output_Data/Results/inexact_objective_values_500_2000.csv", "a", newline="") as csvfile:
     fieldnames = ['batch_size', 'trial #', 'naive obective val', 'inexact objective val', 'greedy objective val']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     
