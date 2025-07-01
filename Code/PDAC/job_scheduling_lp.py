@@ -16,8 +16,8 @@ start_time = 0
 end_time = 1400
 max_length = 700
 
-start_size = 500
-end_size = 2100
+start_size = 600
+end_size = 1000
 step_size = 100
 
 final_data = []
@@ -73,9 +73,8 @@ for batch_size in range(start_size, end_size, step_size):
                 job_object = {**job_id, **jobs_array[curr_index]}
                 jobs.append(job_object)
 
-                greedy_id = {'flexible_id': i}
                 flexibility = {'flexibility': fj}
-                greedy_object = {**greedy_id, **flexibility, **jobs_array[curr_index]}
+                greedy_object = {**job_id, **flexibility, **jobs_array[curr_index]}
                 greedy.append(greedy_object)
   
                 i += 1
@@ -394,7 +393,7 @@ for batch_size in range(start_size, end_size, step_size):
 
                 # We want to find the max of this array above
                 # because we are more concerned right now with PDAC
-                score = max([resources[i] - final_greedy_heights[i] - job_height for i in range(interval_start, interval_end)])
+                score = sum([resources[i] - final_greedy_heights[i] - job_height for i in range(interval_start, interval_end)])
 
                 if score > best_score:
                     best_score = score
@@ -444,7 +443,7 @@ for batch_size in range(start_size, end_size, step_size):
 ----- Export the data ----- 
 """
 # Write to a data csv file
-with open("../../Output_Data/Results/inexact_objective_values_500_2000.csv", "a", newline="") as csvfile:
+with open("../../Output_Data/AAC_Results/greedy_vs_inexact.csv", "a", newline="") as csvfile:
     fieldnames = ['batch_size', 'trial #', 'naive obective val', 'inexact objective val', 'greedy objective val']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     

@@ -22,6 +22,8 @@ start_size = 25
 end_size = 125
 step_size = 25
 
+final_data = []
+
 
 for batch_size in range(start_size, end_size, step_size):
 
@@ -138,7 +140,9 @@ for batch_size in range(start_size, end_size, step_size):
         day = 3
         resources = total[(24 * day) + start_time : (24 * day) + end_time]
 
-
+        # # Implement a resource curve scaling factor to better fit the jobs
+        scale_factor = 0.25
+        resources = [r * scale_factor for r in resources]
 
         """
         Height -> This is a list containing exactly J entries, where each entry contains that height of the corresponding job. The height of the jobs will be dependent on a scale factor. For now, we will scale the jobs based on the relationship 
@@ -289,23 +293,22 @@ for batch_size in range(start_size, end_size, step_size):
         solution = problem.solution
         print("end solve")
 
-
+        print("Objective value:", solution.get_objective_value())
 
         """
         ----- Export the data ----- 
         """
-        # Write to a data csv file
-        data = [
-            {"batch_size": batch_size,"trial #": k, "exact objective val": solution.get_objective_value()}
-        ]
+        # # Write to a data csv file
+        final_data.append({"exact objective val": solution.get_objective_value()})
+    
 
-        with open(f"../../Output_Data/Results/final_exact_objective_values.csv", "a", newline="") as csvfile:
-            fieldnames = ['batch_size', 'trial #', 'exact objective val']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        # with open(f"../../Output_Data/Results/final_exact_objective_values.csv", "a", newline="") as csvfile:
+        #     fieldnames = ['batch_size', 'trial #', 'exact objective val']
+        #     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             
-            # Only write the header on the very first trial run
-            if batch_size == start_size and k == 0:
-                writer.writeheader()
-            writer.writerows(data)
+        #     # Only write the header on the very first trial run
+        #     if batch_size == start_size and k == 0:
+        #         writer.writeheader()
+        #     writer.writerows(data)
 
-            csvfile.close()
+        #     csvfile.close()
