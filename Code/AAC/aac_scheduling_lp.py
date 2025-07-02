@@ -130,12 +130,12 @@ def generate_ilp(decision_variables, height, num_time_steps):
     max_height = sum(height)
 
     # these are the other parameters needed to form the basis of the linear programming problem
-    obj = [0 for _ in range(len(decision_variables))] + [1 for _ in range(len(objective_variables))] # 1*n_0 + 1*n_1 + ... + 1*n_(num_time_steps-1) - Minimize this sum
+    obj = [0 for _ in range(len(decision_variables))] + [1 for _ in range(len(objective_variables))] 
     lb = [0 for _ in range(len(decision_variables))] + [0 for _ in range(len(objective_variables))]
     ub = [1 for _ in range(len(decision_variables)) ] + [max_height for _ in range(len(objective_variables))]
 
     # Establish the problem
-    types = [problem.variables.type.integer] * (len(decision_variables)) + [problem.variables.type.continuous] * (len(objective_variables))
+    types = [problem.variables.type.continuous] * (len(decision_variables)) + [problem.variables.type.continuous] * (len(objective_variables))
     problem.variables.add(obj=obj, lb=lb, ub=ub, types=types, names=names)
 
     return problem
@@ -184,7 +184,7 @@ def generate_constraints(resources, decision_variables, height, intervals, probl
 
     It aggregates all of the desicion variables that correspond to intervals that could possibly be running during that time step.
     It then aggregates the heights corresponding to the jobs that each decision variable represents. It multiplies 
-    those heights by the decision variables. However, the constrain ensures that the total sum is less than the max height n_i
+    those heights by the decision variables. However, the constrain ensures that the total sum is less than the max height d
     """
     for i in range(num_time_steps):
         use_variables = []
@@ -214,14 +214,68 @@ def generate_constraints(resources, decision_variables, height, intervals, probl
         )
 
 
+"""
+* choose_relaxed_schedule -> This function chooses a schedule probabailistically based on the results of the LP solution
+* 
+* INPUTS
+*   decision_variables (list) -> This is the list of all of the decision variables in the ILP
+*   height (list) -> This list of job heights for each job in the trial
+*   intervals (list) -> The list of intervals that each respective job can run in
+*   problem (CPLEX problem) -> The CPLEX problem instance
+"""
+def choose_relaxed_schedule(decision_variables, intervals, num_time_steps, height, problem):
+    problem.solve()
+    solution = problem.solution
+
+
+    # Loop through each of the jobs and generate a random number
+    # Choose a decision variable based on the probability of the current value of the decision variables
+    # Add that chosen variable to a final list so that the overall objective value can be ascertained
+    final_intervals = []
+    final_heights = [0 for _ in range(num_time_steps)]
+
+    curr_index = 0
+    # Loop through each job
+    for job_id in range(len(intervals)):
+        # Generate a random number for the job to be used to select a specific interval
+        random_num = random.uniform(0, 1)
+        probability = 0
+
+        # Loop through each interval in the job and get the value corresponding to each interval (decision variable)
+        # Add the decision variable to the final interval list based on the random number 
+        for i, interval in enumerate(intervals[job_id]):
+            decision_variable = decision_variables[curr_index]
+            decision_value = solution.get_values(decision_variable['name'])
+            probability += decision_value
+
+            if random_num <= probability and len(final_intervals) <= job_id:
+                final_intervals.append(decision_variable)
+            
+            curr_index += 1
+
+    # Generate the height of all of the jobs over the course of all of the time steps
+    # Do this by iterating through all of the selected job intervals in final_intervals and add their height values 
+    # to the final_heights arrays. From this we can determine the objective value of d
+    # simply take the maximum from this height list
+    for job_id, job in enumerate(final_intervals):
+        job_start = job['value'][0]
+        job_end = job['value'][1]
+        job_height = height[job_id]
+
+        for i in range(job_start, job_end):
+            final_heights[i] += job_height
+
+    return final_heights
+
+
 
 """
-* solve_ilp -> This function solves the provided ILP instance
+* solve_lp -> This function solves the provided LP instance
 * 
 * INPUTS 
 *   problem -> The CPLEX ILP instance
 """
-def solve_aac_ilp(jobs_array, resources, start_time, end_time, max_length, batch_size):
+def solve_aac_lp(jobs_array, resources, start_time, end_time, max_length, batch_size):
     # Specify the number of time steps 
     num_time_steps = end_time - start_time
 
@@ -243,31 +297,14 @@ def solve_aac_ilp(jobs_array, resources, start_time, end_time, max_length, batch
     # Apply the linear constraints to the problem
     generate_constraints(resources, decision_variables, height, intervals, problem, num_time_steps)
 
-    problem.solve()
-    solution = problem.solution
+    # Choose the schedule
+    final_heights = choose_relaxed_schedule(decision_variables, intervals, num_time_steps, height, problem)
 
     objective_value = 0
-    for i in range(num_time_steps):
-        variable = f'n_{i}'
-        value = solution.get_values(variable)
-
-        objective_value = max(objective_value, value)
+    for i, height in enumerate(final_heights):
+        if height - resources[i] > objective_value:
+            objective_value = height - resources[i]
 
 
-    # final_heights = [0 for _ in range(num_time_steps)]
-    # final_variables = [dv['name'] for dv in decision_variables if solution.get_values(dv['name']) == 1]
-
-    # for dv in final_variables:
-    #     job_id = int(dv.split('_')[-1])
-    #     job_interval = int(dv.split('_')[1])
-
-    #     interval_start, interval_end = intervals[job_id][job_interval][0], intervals[job_id][job_interval][1]
-    #     for i in range(interval_start, interval_end):
-    #         final_heights[i] += height[job_id]
-    
-    # objective_value = 0
-    # for i, height in enumerate(final_heights):
-    #     if height - resources[i] > objective_value:
-    #         objective_value = height - resources[i]
-    
+    # print("Greedy Objctive Value:", objective_value)
     return objective_value
