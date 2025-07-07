@@ -9,6 +9,8 @@ the optimal schedule of jobs.
 import cplex
 import random
 import json
+import time
+from collections import defaultdict
 
 
 
@@ -192,31 +194,31 @@ def generate_constraints(resources, decision_variables, height, intervals, probl
 
     It aggregates all of the desicion variables that correspond to intervals that could possibly be running during that time step.
     It then aggregates the heights corresponding to the jobs that each decision variable represents. It multiplies 
-    those heights by the decision variables. However, the constrain ensures that the total sum is less than the max height d
+    those heights by the decision variables. However, the constraint ensures that the total sum is less than the max height d
     """
+    # Preprocessing to make data lookup more efficient (using a hashmap)
+    time_to_jobs = defaultdict(list)
+    for variable in decision_variables:
+        job_id = int(variable['name'].split('_')[-1])
+        job_start, job_end = variable['value'][0], variable['value'][1]
+
+        for t in range(job_start, job_end):
+            time_to_jobs[t].append((variable['name'], height[job_id]))
+    
     for i in range(num_time_steps):
         use_variables = []
         use_height = []
 
-        for variable in decision_variables:
-            
-            # Check the interval times of the corresponding variable
-            # Then check if the current timestep falls within that interval
-            job_interval_start, job_interval_end = variable['value'][0], variable['value'][1]
-
-            if job_interval_start <= i < job_interval_end:
-                job_id = int(variable['name'].split('_')[-1])
-
-                use_height.append(height[job_id])
-                use_variables.append(variable['name'])
-
-        # Add d to the decision variables 
+        for var_name, height in time_to_jobs.get(i, []):
+            use_variables.append(var_name)
+            use_height.append(height)
+        
         use_variables.append('d')
         use_height.append(-1)
 
-        # Add the linear constraint to the problem
+        # Add constraint
         problem.linear_constraints.add(
-            lin_expr=[ [ use_variables, use_height ] ],
+            lin_expr=[[use_variables, use_height]],
             senses=['L'],
             rhs=[resources[i]]
         )
@@ -303,7 +305,6 @@ def solve_pdac_lp(jobs_array, resources, start_time, end_time, max_length, batch
 
     # Apply the linear constraints to the problem
     generate_constraints(resources, decision_variables, height, intervals, problem, num_time_steps)
-
 
     final_heights = choose_relaxed_schedule(decision_variables, intervals, num_time_steps, height, problem)
 
