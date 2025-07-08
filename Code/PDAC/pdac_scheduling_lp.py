@@ -13,6 +13,8 @@ from collections import defaultdict
 
 
 """
+----- Generate a list of jobs -----
+
 * generate_jobs -> This function takes in a random sample of jobs and returns a list of job objects. This function also selects 
 *   these jobs based on the given input parameters
 * 
@@ -21,6 +23,7 @@ from collections import defaultdict
 *   start_time (int) -> The time after which all jobs must start
 *   end_time (int) -> The time by which all jobs must end
 *   max_length (int) -> The maximum duration of a given job
+*   batch_size (int) -> The size of the job batch so be created
 * 
 * ADDITIONAL
 * This function will select the jobs based on the parameters. However, it should not select different jobs than other algorithms becuase they will all
@@ -52,6 +55,8 @@ def generate_jobs(jobs_array, start_time, end_time, max_length, batch_size):
 
 
 """
+----- Generate a list of job intervals -----
+
 * get_job_intervals -> This function is responsible for going through each of the jobs in the algorithm and returning all the intervals 
 *   that the job could possibly run within
 * 
@@ -77,6 +82,8 @@ def get_job_intervals(jobs, start_time):
 
 
 """
+----- Get the height of each job -----
+
 * get_job_heights -> This function returns a list of the height of each respective job. The index of the job height corresponds to the 
 *   jobs id
 * 
@@ -90,8 +97,9 @@ def get_job_heights(jobs):
 
 
 
-
 """
+----- Generate a list of LP decision variables ----- 
+
 * generate_decision_variables -> This function generates a list of all of the decision variables for the ILP
 * 
 * INPUTS
@@ -142,6 +150,7 @@ def generate_ilp(decision_variables, height):
 
 
     # Establish the problem
+    # *** Here the variables are set to a 'continuous' type. So they can assume any value in [0, 1] *** 
     types = [problem.variables.type.continuous] * (len(decision_variables)) + [problem.variables.type.continuous]
     problem.variables.add(obj=obj, lb=lb, ub=ub, types=types, names=names)
 
@@ -150,6 +159,8 @@ def generate_ilp(decision_variables, height):
 
 
 """
+----- Generate the LP constraints -----
+
 * generate_contraints -> This function generates and applies the necessary linear constraints to the ILP instance
 * 
 * INPUTS
@@ -195,6 +206,8 @@ def generate_constraints(resources, decision_variables, height, intervals, probl
     those heights by the decision variables. However, the constraint ensures that the total sum is less than the max height d
     """
     # Preprocessing to make data lookup more efficient (using a hashmap)
+    # Go through each decision variable and its corresponding interval and add the decision variable to each time step during which 
+    # the job is (possibly) active
     time_to_jobs = defaultdict(list)
     for variable in decision_variables:
         job_id = int(variable['name'].split('_')[-1])
@@ -203,6 +216,8 @@ def generate_constraints(resources, decision_variables, height, intervals, probl
         for t in range(job_start, job_end):
             time_to_jobs[t].append((variable['name'], height[job_id]))
     
+    # Go through each time step in the time period
+    # Get each decision variable for that time step and add it to a running ILP constraint equation
     for i in range(num_time_steps):
         use_variables = []
         use_height = []
@@ -215,6 +230,8 @@ def generate_constraints(resources, decision_variables, height, intervals, probl
         use_height.append(-1)
 
         # Add constraint
+        # This constraint says that for all of the decision variables multiplied by their height at a specific time step
+        # should not sum to more than the objective variable d.
         problem.linear_constraints.add(
             lin_expr=[[use_variables, use_height]],
             senses=['L'],
@@ -223,6 +240,8 @@ def generate_constraints(resources, decision_variables, height, intervals, probl
 
 
 """
+----- Get the job heights from the schedule -----
+
 * choose_relaxed_schedule -> This function chooses a schedule probabailistically based on the results of the LP solution
 * 
 * INPUTS
@@ -232,9 +251,7 @@ def generate_constraints(resources, decision_variables, height, intervals, probl
 *   problem (CPLEX problem) -> The CPLEX problem instance
 """
 def choose_relaxed_schedule(decision_variables, intervals, num_time_steps, height, problem):
-    problem.solve()
     solution = problem.solution
-
 
     # Loop through each of the jobs and generate a random number
     # Choose a decision variable based on the probability of the current value of the decision variables
@@ -277,10 +294,16 @@ def choose_relaxed_schedule(decision_variables, intervals, num_time_steps, heigh
 
 
 """
-* solve_ilp -> This function solves the provided ILP instance
+* solve_pdac_lp -> This function creates and solves a relaxed LP problem to schedule a jobs 
+*   returns the objective value and schedule of job heights
 * 
 * INPUTS 
-*   problem -> The CPLEX ILP instance
+*   jobs_array (list) -> An unfiltered array of all of the possible jobs available for scheduling
+*   resources (list) -> A list of height values representing the amount of available resources at each discrete time step
+*   start_time (int) -> The earliest possible starting time for each job
+*   end_time (int) -> The latest possible ending time for each job
+*   max_length (int) -> The maximum length of a given job
+*   batch_size (int) -> The number of jobs that should be included in the schedule
 """
 def solve_pdac_lp(jobs_array, resources, start_time, end_time, max_length, batch_size):
     # Specify the number of time steps 
@@ -304,8 +327,13 @@ def solve_pdac_lp(jobs_array, resources, start_time, end_time, max_length, batch
     # Apply the linear constraints to the problem
     generate_constraints(resources, decision_variables, height, intervals, problem, num_time_steps)
 
+    # Solve the relaxed LP
+    problem.solve()
+
+    # Get the heights of the jobs at each time step in the schedule
     final_heights = choose_relaxed_schedule(decision_variables, intervals, num_time_steps, height, problem)
 
+    # Calculate the final objective value (PDAC) based on these heights and the resource curve
     objective_value = 0
     for i, height in enumerate(final_heights):
         if height - resources[i] > objective_value:
