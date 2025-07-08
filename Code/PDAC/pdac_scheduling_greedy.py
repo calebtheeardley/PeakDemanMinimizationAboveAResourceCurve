@@ -1,8 +1,4 @@
-import random
-import json
-import csv
 import math
-
 
 
 """
@@ -105,6 +101,8 @@ def get_job_heights(jobs):
 """
 def generate_greedy_schedule(jobs, resources, intervals, num_time_steps):
     final_heights = [0 for _ in range(num_time_steps)]
+    final_intervals = []
+
     for job_id, interval_set in enumerate(intervals):
         best_score = float(-math.inf)
         best_interval = None
@@ -122,7 +120,7 @@ def generate_greedy_schedule(jobs, resources, intervals, num_time_steps):
                 best_score = score
                 best_interval = interval
 
-        
+        final_intervals.append(best_interval)
         for i in range(best_interval[0], best_interval[1]):
             final_heights[i] += job_height    
     
@@ -154,5 +152,4 @@ def solve_pdac_greedy(jobs_array, resources, start_time, end_time, max_length, b
 
 
     # print("Greedy Objctive Value:", objective_value)
-    return objective_value
-
+    return (objective_value, final_heights)

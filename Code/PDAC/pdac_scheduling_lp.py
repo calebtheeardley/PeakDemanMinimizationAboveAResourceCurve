@@ -8,8 +8,6 @@ the optimal schedule of jobs.
 """
 import cplex
 import random
-import json
-import time
 from collections import defaultdict
 
 
@@ -313,6 +311,4 @@ def solve_pdac_lp(jobs_array, resources, start_time, end_time, max_length, batch
         if height - resources[i] > objective_value:
             objective_value = height - resources[i]
 
-
-    # print("Greedy Objctive Value:", objective_value)
-    return objective_value
+    return (objective_value, final_heights)

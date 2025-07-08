@@ -1,7 +1,3 @@
-import random
-import json
-import csv
-import math
 
 """
 * generate_jobs -> This function takes in a random sample of jobs and returns a list of job objects. This function also selects 
@@ -46,6 +42,7 @@ def generate_jobs(jobs_array, start_time, end_time, max_length, batch_size):
 
 def choose_naive_schedule(jobs, num_time_steps, start_time, end_time):
     naive_heights = [0 for _ in range(num_time_steps)]
+    final_intervals = []
     for job in jobs:
         aj = job['release'] - start_time
         hj = job['height']
@@ -69,5 +66,4 @@ def solve_pdac_naive(jobs_array, resources, start_time, end_time, max_length, ba
         if height - resources[i] > objective_value:
             objective_value = height - resources[i]
 
-    # print("Greedy Objctive Value:", objective_value)
-    return objective_value
+    return (objective_value, final_heights)

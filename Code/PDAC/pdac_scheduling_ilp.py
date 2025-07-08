@@ -7,8 +7,6 @@ This is a relaxed ILP problem. Therefore, it uses typical LP to solve the proble
 the optimal schedule of jobs.
 """
 import cplex
-import random
-import json
 
 
 
@@ -222,6 +220,29 @@ def generate_constraints(resources, decision_variables, height, intervals, probl
         )
 
 
+
+def get_final_heights(height, problem, decision_variables, num_time_steps):
+    final_intervals = []
+    final_heights = [0 for _ in range(num_time_steps)]
+
+    solution_values = problem.solution.get_values()
+    variable_names = problem.variables.get_names()
+
+    for name, value in zip(variable_names, solution_values):
+        if value == 1:
+            res = next(filter(lambda x: x['name'] == name, decision_variables), None)
+            final_intervals.append(res['value'])
+    
+    print(final_intervals)
+    for i, interval in enumerate(final_intervals):
+        interval_start, interval_end = interval[0], interval[1]
+        for j in range(interval_start, interval_end):
+            final_heights[j] += height[i]
+
+    return final_heights
+
+
+
 """
 * solve_ilp -> This function solves the provided ILP instance
 * 
@@ -252,6 +273,7 @@ def solve_pdac_ilp(jobs_array, resources, start_time, end_time, max_length, batc
 
     problem.solve()
     solution = problem.solution
+    
+    final_heights = get_final_heights(height, problem, decision_variables, num_time_steps)
 
-    # print("Objective value:", solution.get_objective_value())
-    return solution.get_objective_value()
+    return (solution.get_objective_value(), final_heights)
