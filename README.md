@@ -1,5 +1,7 @@
 # Power Job Scheduling Under a Resource Curve
 
+This is the code that I developed during my Summer 2025 REU at Montana State University working with Professor Sean Yaw.
+
 ## **Code**
 
 This folder contains all of the necessary code to scrape power jobs from an existing database, schedule those jobs using a variety of algorithms and generate analytical visuals of the performance of each of those algorithms. This folder is where the bulk of the project lives.

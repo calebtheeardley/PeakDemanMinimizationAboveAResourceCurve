@@ -94,7 +94,7 @@ def solve_pdac_naive(jobs_array, resources, start_time, end_time, max_length, ba
     jobs = generate_jobs(jobs_array, start_time, end_time, max_length, batch_size)
 
     # Get the list of job heights in the schedule
-    final_heights = choose_naive_schedule(jobs, num_time_steps, start_time, end_time)
+    final_heights = choose_naive_schedule(jobs, num_time_steps, start_time)
 
     # Calculate the final objective value (PDAC) based on these heights and the resource curve
     objective_value = 0
