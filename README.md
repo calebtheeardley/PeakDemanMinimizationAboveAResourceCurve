@@ -66,4 +66,8 @@ This folder contains all of the necessary data in order for the algorithm analys
 
 ## **Output Data**
 
-This folder contains all of the raw data outputs from our algorithm analyses, including CSV files containing PDAC information and computer runtime information. Additionally, it contains visual representations of these analyses.
+This folder contains all of the raw data outputs from our algorithm analyses, including CSV files containing PDAC information and computer runtime information. Additionally, it contains visual representations of these analyses. These visuals are the ones that were shown on the final REU poster.
+<br>
+
+- `Final_Figures` - This folder contains all of the visual analyses of the project. Specifically, it includes a visual of the resource curve and example job schedule for the Relaxed LP, Greedy and Naive for a batch of 800 jobs. Importantly, the experimental trial result visuals for Exact ILP algorithm and the Inexact LP algorithms comparisons are also contained in this folder. Each visual has both a black and white (BW) file and a color file.
+- `Final_PDAC_Results` - This contains the raw data collected from the experimental trials for both the Exact and Inexact algorithms. This is the data that was visualized in the exact_pdac_analysis_0.png and inexact_pdac_analysis_0.png files in the Final_Figures folder.
